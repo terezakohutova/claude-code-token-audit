@@ -47,6 +47,7 @@ SHORT_RUN_REQUESTS = 4          # subagent run with <= this many API requests = 
 IMG_DEFAULT_TOKENS = 1000       # image without a known size (estimate)
 MAIN = "(main thread)"
 UNKNOWN_SUBAGENT = "(unknown subagent)"
+# Harness-internal entries that can appear in the tool list but are not grants you can remove.
 NEVER_FLAG = ("DeferredToolPlaceholder", "SubagentHandback", "advisor")
 
 
@@ -223,6 +224,8 @@ def scan_transcript(path, run):
                 m = o.get("message") or {}
                 c = m.get("content")
                 if isinstance(c, str):
+                    if not c.lstrip().startswith("<command-"):
+                        continue  # typed prompt text, not a slash command record
                     for cm in re.findall(r"<command-name>/?([\w:-]+)</command-name>", c):
                         run["skills"].append((run["requests"], cm))
                     continue
@@ -278,12 +281,19 @@ def carry_wt(chars, req_idx, total_req):
     return est_tokens(chars) * (W_CW5 + W_CR * max(total_req - req_idx - 1, 0))
 
 
-def short_path(key, cwd):
+HOME = os.path.expanduser("~").replace("\\", "/").rstrip("/") + "/"
+
+
+def short_path(key, cwd, home=HOME):
+    """Path relative to the session's project; outside it, the home folder becomes ~ so the
+    report does not carry the OS user name."""
     p = key.replace("\\", "/")
     if cwd:
         base = cwd.replace("\\", "/").rstrip("/") + "/"
         if p.lower().startswith(base.lower()):
             return p[len(base):]
+    if home and p.lower().startswith(home.lower()):
+        return "~/" + p[len(home):]
     return p
 
 

@@ -1,12 +1,12 @@
 # Token audit 2026-01-07 (last 7 days)
 
-Runs: 10 (2 main threads), requests: 102, total 740 978 WT. WT = weighted tokens (cache read 0.1, cache write 1.25, output 5). Sizes marked ~ are estimates, characters/3.5.
+Runs: 10 (2 main threads), requests: 102, total 741 033 WT. WT = weighted tokens (cache read 0.1, cache write 1.25, output 5). Sizes marked ~ are estimates, characters/3.5.
 
 ## Spend per agent
 
 | Agent | Runs | Req | WT | Share | Startup ctx median | Output | Model | Effort |
 |---|---|---|---|---|---|---|---|---|
-| (main thread) | 2 | 46 | 352 780 | 47.6 % | 15 528 | 22 865 | opus-5-5 | medium |
+| (main thread) | 2 | 46 | 352 835 | 47.6 % | 15 528 | 22 865 | opus-5-5 | medium |
 | browser-checker | 2 | 36 | 264 900 | 35.7 % | 7 546 | 20 016 | sonnet-5-5 | medium |
 | code-reviewer | 5 | 13 | 69 485 | 9.4 % | 5 125 | 5 874 | opus-5-5 | high |
 | docs-writer | 1 | 7 | 53 814 | 7.3 % | 10 520 | 3 942 | sonnet-5-5 | medium |

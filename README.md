@@ -10,11 +10,12 @@ One Python file, standard library only, no network. A subagent definition with a
 python token_audit.py --repo path/to/your/project
 ```
 
-That audits the last 7 days of `~/.claude/projects` (or `$CLAUDE_CONFIG_DIR/projects`) against the agents in `path/to/your/project/.claude/agents`. Useful flags:
+That audits the session files changed in the last 7 days in `~/.claude/projects` (or `$CLAUDE_CONFIG_DIR/projects`) against the agents in `path/to/your/project/.claude/agents`. Useful flags:
 
 | Flag | What it does |
 |---|---|
-| `--days 14` | another window |
+| `--days 14` | another window (by file modification time, so a resumed older session counts whole) |
+| `--top 15` | longer lists of eaters and proposals |
 | `--agent code-reviewer` | one subagent type only |
 | `--out report.md`, `--json agg.json` | also write the report or the raw aggregates to a file |
 | `--list-sessions`, `--session "checkout"` | one row per named session, main thread plus its subagents |
@@ -23,13 +24,13 @@ That audits the last 7 days of `~/.claude/projects` (or `$CLAUDE_CONFIG_DIR/proj
 Try it without your own logs first:
 
 ```
-python examples/make_synthetic_logs.py demo-logs
+python examples/make_synthetic_logs.py demo-logs # git-ignored
 python token_audit.py --projects demo-logs/projects --repo examples/demo-project
 ```
 
 ## What came out on the demo
 
-The demo is a made-up web shop with three subagents: `code-reviewer` (Opus, high effort), `browser-checker` (takes screenshots) and `docs-writer` (preloads a long style guide). Its logs are written by [examples/make_synthetic_logs.py](examples/make_synthetic_logs.py), and [examples/sample-report.md](examples/sample-report.md) is the unedited output of the command above. A test regenerates both on every CI run and fails if they differ. The top proposals:
+The demo is a made-up web shop with three subagents: `code-reviewer` (Opus, high effort), `browser-checker` (takes screenshots) and `docs-writer` (preloads a long style guide). Its logs are written by [examples/make_synthetic_logs.py](examples/make_synthetic_logs.py), and [examples/sample-report.md](examples/sample-report.md) is the unedited output of the command above (made with a fixed report date). On every CI run a test regenerates the logs and the report and fails if the report differs. The top proposals:
 
 1. **short subagent runs** - `code-reviewer`: 5 of 5 runs had at most 4 requests, median startup context ~5 125 tok. Saving ~48 639 WT.
 2. **screenshots** - `browser-checker`: 32 images, ~43 680 tok. Saving ~39 094 WT.
@@ -56,11 +57,11 @@ It also flags `code-reviewer` for a human look: Opus at high effort for 2.6 requ
 
 **Carry.** Content that enters the context at request *i* is paid once as a cache write and then as a cache read in every later request of that run. A 20k-token file read at the start of a 200-request run costs about 25k + 200 * 20k * 0.1 = 425k WT. Compaction shortens this, so carry is an upper estimate; the totals per agent are exact.
 
-`api-request-shape` records appear in logs from Claude Code 2.1.300 on. Older logs still get the token numbers, and the report says what it could not measure.
+`api-request-shape` records appear in logs from about Claude Code 2.1.300 on. Older logs still get the token numbers, and the report says what it could not measure.
 
 ## Privacy
 
-Session logs hold your conversations. The report carries only numbers, agent, skill, tool and model names, session names and the paths of files that were read. No prompt, reply or tool output. A test fills the synthetic logs with a marker string in every prompt, reply, tool result and system prompt and fails if the marker shows up in the report, the JSON or the session table. Keep reports out of git anyway, since file paths and session names can say more than you want.
+Session logs hold your conversations. The report carries only numbers, agent, skill, tool and model names, session names and the paths of files that were read (relative to the project, or with your home folder shown as `~`). No prompt, reply or tool output. A test fills the synthetic logs with a marker string in every prompt, reply, tool result and system prompt and fails if the marker shows up in the report, the JSON or the session table. Keep reports out of git anyway, since file paths and session names can say more than you want.
 
 ## The agent
 
@@ -73,7 +74,7 @@ To use it, copy `token_audit.py` and `.claude/agents/token-auditor.md` into your
 Several good tools already count Claude Code tokens. This one does not replace them:
 
 - [ccusage](https://github.com/ryoppippi/ccusage) (MIT): usage and cost by day, month, session, 5-hour block, model and project. The message id + request id deduplication here is the same approach; no code is taken from it.
-- Claude Code's own `/usage` (from 2.1.174): share of usage by skill, subagent, plugin and MCP server.
+- Claude Code's own `/usage` (recent versions): share of usage by skill, subagent, plugin and MCP server.
 - [token-reporter-plugin](https://github.com/emasoft/token-reporter-plugin) (MIT): hook-based report per subagent, skill and tool for the current session.
 - [token-optimizer](https://github.com/alexgreensh/token-optimizer) (PolyForm Noncommercial): per-component audit, re-read detection and coaching with savings estimates.
 

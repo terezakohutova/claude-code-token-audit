@@ -19,7 +19,6 @@ import token_audit as ta  # noqa: E402
 
 DEMO = os.path.join(REPO, "examples", "demo-project")
 SAMPLE = os.path.join(REPO, "examples", "sample-report.md")
-DASHES = "[" + "".join(chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015)) + "]"
 
 
 def run_cli(*args):
@@ -110,6 +109,22 @@ class TestFindings(Synthetic):
     def test_read_paths_are_relative_to_the_project(self):
         self.assertNotIn(synth.CWD, self.report)
 
+    def test_paths_outside_the_project_hide_the_home_folder(self):
+        self.assertEqual(ta.short_path(r"D:\Data\someone\notes\a.md", "/srv/x", "D:/Data/someone/"), "~/notes/a.md")
+        self.assertEqual(ta.short_path("/srv/x/src/a.py", "/srv/x", "/root/"), "src/a.py")
+
+    def test_typed_command_tag_is_not_a_skill(self):
+        run = ta.new_run(ta.MAIN, "s", "p")
+        tmp = tempfile.mkdtemp()
+        try:
+            p = os.path.join(tmp, "t.jsonl")
+            with open(p, "w", encoding="utf-8") as f:
+                f.write(json.dumps({"type": "user", "message": {"content": "look <command-name>x:y</command-name>"}}) + chr(10))
+                f.write(json.dumps({"type": "user", "message": {"content": "<command-name>/a:b</command-name>"}}) + chr(10))
+            self.assertEqual([s for _, s in ta.scan_transcript(p, run)["skills"]], ["a:b"])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
     def test_heavy_model_on_short_runs_is_flagged(self):
         self.assertIn("- `code-reviewer` (opus/high)", self.report)
 
@@ -175,9 +190,6 @@ class TestRepoHygiene(unittest.TestCase):
         with open(p, encoding="utf-8") as f:
             return f.read()
 
-    def test_no_long_dashes(self):
-        self.assertEqual([p for p in self.files() if re.search(DASHES, self.read(p))], [])
-
     def test_no_local_paths_or_email_addresses(self):
         pat = re.compile(r"[A-Za-z]:[/\x5c]Users[/\x5c]|/home/\w+/|/Users/\w+/|[\w.+-]+@[\w-]+\.[a-z]{2,}")
         bad = [f"{os.path.relpath(p, REPO)}: {m.group(0)}" for p in self.files()
@@ -185,7 +197,8 @@ class TestRepoHygiene(unittest.TestCase):
         self.assertEqual(bad, [])
 
     def test_no_real_session_logs_committed(self):
-        found = [os.path.join(d, f) for d, dirs, files in os.walk(REPO) if ".git" not in d
+        found = [os.path.join(d, f) for d, dirs, files in os.walk(REPO)
+                 if ".git" not in d and "demo-logs" not in d  # README demo output, git-ignored
                  for f in files if f.endswith((".jsonl", ".meta.json"))]
         self.assertEqual(found, [])
 

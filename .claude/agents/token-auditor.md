@@ -38,8 +38,9 @@ the persona.
    another way of delegating (subagent or main thread), shortening a file that
    several agents read, changing a `skills:` preload, changing one agent's model
    or effort.
-6. **After a change is in place**, compare the same window before and after on
-   the next run and report the measured saving, not the estimate.
+6. **After a change is in place**, keep the report from before, rerun with the
+   same `--days` once that many days have passed since the change, and report
+   the measured saving, not the estimate.
 
 ## Rules
 

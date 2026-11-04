@@ -139,7 +139,7 @@ def build(out_dir):
     w = Writer(rng, "main", s1, "2026-01-05T09:00", title="Checkout bug")
     w.tool("Read", {"file_path": spec[0]}, chars=spec[1])
     w.tool("Grep", {"pattern": "checkout"}, chars=1200)
-    w.user_text(f"{MARKER} <command-name>/style-guide</command-name>")
+    w.user_text(f"<command-message>style-guide</command-message> <command-name>/style-guide</command-name> {MARKER}")
     w.tool("Skill", {"skill": "release-notes"}, chars=300)
     for i in range(10):
         w.tool("Read", {"file_path": f"{CWD}/src/cart_{i % 4}.py"}, chars=3000)
