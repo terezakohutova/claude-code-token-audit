@@ -1,0 +1,6 @@
+# Reports and logs never go into the repo: they can name your files and sessions.
+token-audit-reports/
+demo-logs/
+*.jsonl
+__pycache__/
+.claude/settings.local.json
