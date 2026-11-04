@@ -86,7 +86,7 @@ What this one adds: unused tool grants measured from the real request shape, scr
 python -m unittest discover -s tests -v
 ```
 
-CI runs them on Linux and Windows with Python 3.9 and 3.13.
+CI runs them on Linux and Windows with Python 3.10 and 3.13.
 
 ## License
 
